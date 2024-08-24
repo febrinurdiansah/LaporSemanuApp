@@ -1,0 +1,24 @@
+{
+    "jenis_kelamin": "L",
+    "gol_darah": "B",
+    "tempat_lahir": "isekai",
+    "pekerjaan": "budak perusahaan",
+    "nama": "asdf",
+    "tanggal_lahir": "2024-08-24T13:40:39.956Z",
+    "alamat": "gak tahu",
+    "jabatan": "kepala saja",
+    "agama": "Islam",
+    "nik": "1069",
+    "pendidikan_terakhir": "TK",
+    "nip": "asd69",
+    "status_kawin": "Belum Kawin",
+    "masa_jabatan_mulai": 1069,
+    "masa_jabatan_selesai": 6969
+}
+
+{
+    "nip": "asd69",
+    "username": "asd69",
+    "password": "asd69",
+    "email": "asd@yahoo.com"
+}
