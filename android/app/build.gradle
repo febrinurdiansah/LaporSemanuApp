@@ -60,6 +60,7 @@ android {
             //Added
             // Minify resources to reduce APK size
             minifyEnabled true
+            // Shrink code not use
             shrinkResources true
             // Use ProGuard for code obfuscation and optimization
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
