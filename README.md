@@ -1,6 +1,6 @@
 # monkir
 
-A new Flutter project.
+A Employee Performance Monitoring Project.
 
 ## Getting Started
 
