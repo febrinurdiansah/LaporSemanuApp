@@ -1,8 +1,9 @@
 import 'dart:io';
-
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:monkir/Screens/SuccessScreen.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 
 class WorkScreen extends StatefulWidget {
   @override
@@ -10,9 +11,9 @@ class WorkScreen extends StatefulWidget {
 }
 
 class _WorkScreenState extends State<WorkScreen> {
-  DateTime? pickedDate;
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
+  List<DateTime>? dateTimeList;
 
   final TextEditingController _kegiatanController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
@@ -26,6 +27,15 @@ class _WorkScreenState extends State<WorkScreen> {
       });
     }
   }
+
+  String formatDateRange(List<DateTime> dateRange) {
+    final DateFormat formatter = DateFormat('MMMM d, yyyy');
+    String start = formatter.format(dateRange[0]);
+    String end = formatter.format(dateRange[1]);
+
+    return '$start to $end';
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,17 +108,41 @@ class _WorkScreenState extends State<WorkScreen> {
                       const Text('Due Date'),
                       InkWell(
                         onTap: () async {
-                          final DateTime? selectedDate = await showDatePicker(
-                            context: context,
-                            initialDate: pickedDate ?? DateTime.now(),
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2050),
-                          );
-                          if (selectedDate != null) {
-                            setState(() {
-                              pickedDate = selectedDate;
-                            });
-                          }
+                          List<DateTime>? selectedDates = await showOmniDateTimeRangePicker(
+                          context: context,
+                          startInitialDate: DateTime.now(),
+                          startFirstDate:DateTime(1600).subtract(const Duration(days: 3652)),
+                          startLastDate: DateTime.now().add( const Duration(days: 3652),),
+                          endInitialDate: DateTime.now(),
+                          endFirstDate: DateTime(1600).subtract(const Duration(days: 3652)),
+                          endLastDate: DateTime.now().add(const Duration(days: 3652), ),
+                          is24HourMode: true,
+                          minutesInterval: 1,
+                          secondsInterval: 1,
+                          borderRadius: const BorderRadius.all(Radius.circular(16)),
+                          constraints: const BoxConstraints(
+                            maxWidth: 350,
+                            maxHeight: 650,
+                          ),
+                          transitionBuilder: (context, anim1, anim2, child) {
+                            return FadeTransition(
+                              opacity: anim1.drive(
+                                Tween(
+                                  begin: 0,
+                                  end: 1,
+                                ),
+                              ),
+                              child: child,
+                            );
+                          },
+                          transitionDuration: const Duration(milliseconds: 200),
+                          barrierDismissible: true,
+                        );
+                        if (selectedDates != null){
+                          setState(() {
+                            dateTimeList = selectedDates;
+                          });
+                        }
                         },
                         child: Container(
                           width: double.infinity,
@@ -120,10 +154,11 @@ class _WorkScreenState extends State<WorkScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(
-                            pickedDate != null
-                                ? '${pickedDate!.day}-${pickedDate!.month}-${pickedDate!.year}'
-                                : 'Select a date',
-                          ),
+                            dateTimeList == null
+                            ? 'Select a date'
+                            : formatDateRange(dateTimeList!),
+                            style: const TextStyle(fontSize: 16),
+                            ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -222,7 +257,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 //tested
                 print('Kegiatan: ${_kegiatanController.text}');
                 print('desc: ${_descController.text}');
-                print('Tanggal: ${pickedDate != null ? '${pickedDate!.day}-${pickedDate!.month}-${pickedDate!.year}' : 'No Date Selected'}');
+                print('Tanggal: ${dateTimeList}');
                 print('Foto: ${_imageFile != null ? _imageFile!.path : 'No Image Selected'}');
                 print('Status: ${_statusController.text}');
 
@@ -231,7 +266,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 _descController.clear();
                 _statusController.clear();
                 setState(() {
-                  pickedDate = null;
+                  dateTimeList = null;
                   _imageFile = null;
                 });
 
