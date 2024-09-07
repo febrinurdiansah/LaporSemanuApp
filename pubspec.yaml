@@ -45,6 +45,8 @@ dependencies:
   omni_datetime_picker: ^2.0.4
   flutter_neat_and_clean_calendar: ^0.4.14
   intl: ^0.19.0
+  loading_animation_widget: ^1.2.1
+  shimmer_animation: ^2.2.1
 
 dev_dependencies:
   flutter_test:

@@ -1,24 +1,12 @@
-{
-    "jenis_kelamin": "L",
-    "gol_darah": "B",
-    "tempat_lahir": "isekai",
-    "pekerjaan": "budak perusahaan",
-    "nama": "asdf",
-    "tanggal_lahir": "2024-08-24T13:40:39.956Z",
-    "alamat": "gak tahu",
-    "jabatan": "kepala saja",
-    "agama": "Islam",
-    "nik": "1069",
-    "pendidikan_terakhir": "TK",
-    "nip": "asd69",
-    "status_kawin": "Belum Kawin",
-    "masa_jabatan_mulai": 1069,
-    "masa_jabatan_selesai": 6969
-}
+{"jenis_kelamin":"L","gol_darah":"A","tempat_lahir":"Isekai","pekerjaan":"kepala presiden","nama":"Jojojoojo","tanggal_lahir":"2024-09-06T06:54:02.334Z","alamat":"sawah","jabatan":"pegawai","agama":"Islam","nik":"696969696969696969","pendidikan_terakhir":"sd","nip":"qwerty","status_kawin":"Belum Kawin","masa_jabatan_mulai":10,"masa_jabatan_selesai":2990}
 
 {
-    "nip": "asd69",
-    "username": "asd69",
-    "password": "asd69",
-    "email": "asd@yahoo.com"
+  "nip": "qwerty",
+  "username": "qwerty",
+  "password": "qwerty",
+  "email": "qwerty@yahoo.poi"
 }
+
+{"nama_kegiatan":"string","tanggal":"2024-09-07T15:34:41.923Z","tempat":"string","deskripsi":"string"}
+
+{"jenis_kelamin":"L","gol_darah":"A","tempat_lahir":"string","pekerjaan":"string","nama":"string","tanggal_lahir":"2024-09-07T15:49:03.189Z","alamat":"string","jabatan":"string","agama":"Islam","nik":"string","pendidikan_terakhir":"string","nip":"string","status_kawin":"Belum Kawin","masa_jabatan_mulai":0,"masa_jabatan_selesai":0}

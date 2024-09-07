@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:monkir/Screens/RegisterScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:monkir/Screens/HomeScreen.dart';
 import 'package:monkir/Screens/LoginScreen.dart';
@@ -52,7 +53,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
       themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: _isLoggedIn ? MainScreen() : LoginScreen(),
+      home: _isLoggedIn ? MainScreen() : RegisterScreen(),
     );
   }
 }

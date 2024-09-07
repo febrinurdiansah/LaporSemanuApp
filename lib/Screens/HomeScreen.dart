@@ -1,7 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:monkir/Screens/FailedScreen.dart';
-import 'package:monkir/Screens/LoginScreen.dart';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:monkir/Screens/LoginScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:shimmer_animation/shimmer_animation.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+import '../models/UserData.dart';
 import 'CalendarScreen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,6 +19,63 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  UserProfile? _userProfile;
+  bool _isLoading = true;
+
+  @override
+  void initState(){
+    super.initState();
+    _fetchUserProfile();
+  }
+
+  // Get token from SharedPreferences
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('auth_token');
+    print('Token diambil dari SharedPreferences: $token');
+    return token;
+  }
+
+  // Fetch user profile data
+  Future<void> _fetchUserProfile() async {
+    final token = await _getToken();
+    if (token == null) {
+      print('No token found');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final url = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/pamong/'; 
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _userProfile = UserProfile.fromJson(data);
+          _isLoading = false;
+        });
+      } else {
+        print('Failed to load user profile');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     TextStyle _style = TextStyle(
       fontSize: 16
     );
-    String name = 'Joe';
+    String name = _userProfile?.name ?? 'N/A';
     String getTime = '';
     String getQuots = '';
     int hours = DateTime.now().hour;
@@ -46,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Column(
@@ -54,42 +118,44 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 8,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('$getTime, $name',
-                              style: _style,),
-                            const SizedBox(height: 8.0),
-                            Text(getQuots,
-                              style: _style),
-                          ],
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 8,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Shimmer(
+                                child: Text('$getTime, $name',
+                                  style: _style,),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Text(getQuots,
+                                style: _style),
+                            ],
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 2, 
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(
-                                builder: (context) => LoginScreen()
-                                ));
-                            },
-                            child: CircleAvatar(
-                              radius: 30,
-                              backgroundImage: NetworkImage(
-                                'https://images.unsplash.com/photo-1611590027211-b954fd027b51?auto=format&fit=crop&w=1338&q=80',
+                        Expanded(
+                          flex: 2, 
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(
+                                  builder: (context) => LoginScreen()
+                                  ));
+                              },
+                              child: CircleAvatar(
+                                radius: 30,
+                                backgroundImage: NetworkImage(
+                                  _userProfile?.image ?? 'https://via.placeholder.com/150',
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                     const SizedBox(height: 16.0),
                     Row(
                       children: [

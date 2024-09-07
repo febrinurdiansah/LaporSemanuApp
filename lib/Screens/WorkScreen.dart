@@ -15,9 +15,9 @@ class _WorkScreenState extends State<WorkScreen> {
   final ImagePicker _picker = ImagePicker();
   List<DateTime>? dateTimeList;
 
-  final TextEditingController _kegiatanController = TextEditingController();
+  final TextEditingController _activityController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
-  final TextEditingController _statusController = TextEditingController();
+  final TextEditingController _placeController = TextEditingController();
 
   Future<void> _pickerImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
@@ -69,7 +69,7 @@ class _WorkScreenState extends State<WorkScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextFormField(
-                        controller: _kegiatanController,
+                        controller: _activityController,
                         decoration: InputDecoration(
                           labelText: 'Kegiatan',
                           enabledBorder: OutlineInputBorder(
@@ -162,6 +162,24 @@ class _WorkScreenState extends State<WorkScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _placeController,
+                        decoration: InputDecoration(
+                          labelText: 'Tempat',
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(width: 2.0),
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(width: 2.0),
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          filled: true,
+                          contentPadding: const EdgeInsets.all(16.0),
+                          
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       const Text('Foto'),
                       GestureDetector(
                         onTap: _showFullImg,
@@ -198,23 +216,6 @@ class _WorkScreenState extends State<WorkScreen> {
                               Text('Upload Foto'),
                             ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _statusController,
-                        decoration: InputDecoration(
-                          labelText: 'Status',
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2.0),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(width: 2.0),
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          filled: true,
-                          contentPadding: const EdgeInsets.all(10.0),
                         ),
                       ),
                     ],
@@ -255,16 +256,16 @@ class _WorkScreenState extends State<WorkScreen> {
               onPressed: () {
                 Navigator.pop(context);
                 //tested
-                print('Kegiatan: ${_kegiatanController.text}');
+                print('Kegiatan: ${_activityController.text}');
                 print('desc: ${_descController.text}');
                 print('Tanggal: ${dateTimeList}');
                 print('Foto: ${_imageFile != null ? _imageFile!.path : 'No Image Selected'}');
-                print('Status: ${_statusController.text}');
+                print('Tempat: ${_placeController.text}');
 
                 //bersih-bersih
-                _kegiatanController.clear();
+                _activityController.clear();
                 _descController.clear();
-                _statusController.clear();
+                _placeController.clear();
                 setState(() {
                   dateTimeList = null;
                   _imageFile = null;
