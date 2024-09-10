@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../models/ProfileModel.dart';
 import '../models/UserData.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -16,55 +17,44 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _jenisKelamin;
-  String? _golDarah;
-  String? _statusKawin;
-  String? _agama;
-  late String _nama;
-  late String _tempatLahir;
-  late String _pekerjaan;
-  late String _tanggalLahir;
-  late String _alamat;
-  late String _jabatan;
-  late String _nik;
-  late String _pendidikanTerakhir;
-  late String _nip;
 
   @override
   void initState() {
     super.initState();
-    // Initialize fields with the profile data
-    final profile = widget.userProfile;
-    _jenisKelamin = profile.gender;
-    _golDarah = profile.bloodType;
-    _statusKawin = profile.maritalStatus;
-    
-    _agama = profile.religion;
-    _nama = profile.name;
-    _tempatLahir = profile.birthPlace;
-    _pekerjaan = profile.job;
-    _tanggalLahir = profile.birthDate;
-    _alamat = profile.address;
-    _jabatan = profile.position;
-    _nik = profile.nik;
-    _pendidikanTerakhir = profile.lastEducation;
-    _nip = profile.nip;
+    final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
+
+    // Initialize fields with profile data
+    profileNotifier.updateName(widget.userProfile.name);
+    profileNotifier.updateGender(widget.userProfile.gender);
+    profileNotifier.updateBloodType(widget.userProfile.bloodType);
+    profileNotifier.updateBirthPlace(widget.userProfile.birthPlace);
+    profileNotifier.updateBirthDate(widget.userProfile.birthDate);
+    profileNotifier.updateNik(widget.userProfile.nik);
+    profileNotifier.updateJob(widget.userProfile.job);
+    profileNotifier.updatePosition(widget.userProfile.position);
+    profileNotifier.updateLastEducation(widget.userProfile.lastEducation);
+    profileNotifier.updateMaritalStatus(widget.userProfile.maritalStatus);
+    profileNotifier.updateReligion(widget.userProfile.religion);
+    profileNotifier.updateAddress(widget.userProfile.address);
+    profileNotifier.updateNip(widget.userProfile.nip);
+    profileNotifier.updateTermStart(widget.userProfile.termStart);
+    profileNotifier.updateTermEnd(widget.userProfile.termEnd);
   }
 
   Future<void> _selectDate(BuildContext context) async {
-  final DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: DateTime.now(),
-    firstDate: DateTime(1900),
-    lastDate: DateTime(2101),
-  );
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2101),
+    );
 
-  if (picked != null && picked != DateTime.now()) {
-    setState(() {
-      _tanggalLahir = "${picked.toLocal().day}/${picked.toLocal().month}/${picked.toLocal().year}";
-    });
+    if (picked != null && picked != DateTime.now()) {
+      final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
+      final formattedDate = "${picked.toLocal().year.toString().padLeft(4, '0')}-${picked.toLocal().month.toString().padLeft(2, '0')}-${picked.toLocal().day.toString().padLeft(2, '0')}";
+      profileNotifier.updateBirthDate(formattedDate);
+    }
   }
-}
 
   // Get token from SharedPreferences
   Future<String?> _getToken() async {
@@ -74,60 +64,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return token;
   }
 
-  // Function to send data to API
   Future<void> _updateProfile() async {
-    final token = await _getToken();
-    final url = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/pamong/'; // Replace with your API URL
+  final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
+  final token = await _getToken();
+  final url = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/pamong/'; // Replace with your API URL
 
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'nama': _nama,
-        'jenis_kelamin': _jenisKelamin,
-        'golongan_darah': _golDarah,
-        'tempat_lahir': _tempatLahir,
-        'tanggal_lahir': _tanggalLahir,
-        'nik': _nik,
-        'pekerjaan': _pekerjaan,
-        'jabatan': _jabatan,
-        'pendidikan_terakhir': _pendidikanTerakhir,
-        'status_kawin': _statusKawin,
-        'agama': _agama,
-        'alamat': _alamat,
-        'nip': _nip,
-      }),
-    );
+  try {
+    final request = http.MultipartRequest('PUT', Uri.parse(url))
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields['pamong'] = jsonEncode({
+        'nama': profileNotifier.name,
+        'jenis_kelamin': profileNotifier.gender,
+        'gol_darah': profileNotifier.bloodType,
+        'tempat_lahir': profileNotifier.birthPlace,
+        'tanggal_lahir': profileNotifier.birthDate,
+        'nik': profileNotifier.nik,
+        'pekerjaan': profileNotifier.job,
+        'jabatan': profileNotifier.position,
+        'pendidikan_terakhir': profileNotifier.lastEducation,
+        'status_kawin': profileNotifier.maritalStatus,
+        'agama': profileNotifier.religion,
+        'alamat': profileNotifier.address,
+        'nip': profileNotifier.nip,
+        'masa_jabatan_mulai': profileNotifier.termStart.toString(),
+        'masa_jabatan_selesai': profileNotifier.termEnd.toString(),
+      });
+
+    final response = await request.send();
 
     if (response.statusCode == 200) {
       print('Profile updated successfully');
+      final profileModel = Provider.of<ProfileModel>(context, listen: false);
+      await profileModel.fetchUserProfile(); // Fetch updated profile data
       Navigator.pop(context); // Go back to the profile screen
     } else {
-      print('Failed to update profile');
+      final responseBody = await response.stream.bytesToString();
+      print('Failed to update profile: $responseBody');
     }
+  } catch (e) {
+    print('Error: $e');
   }
+}
 
-  void _printValues() {
-    print('Nama: $_nama');
-    print('Jenis Kelamin: $_jenisKelamin');
-    print('Golongan Darah: $_golDarah');
-    print('Tempat Lahir: $_tempatLahir');
-    print('Tanggal Lahir: $_tanggalLahir');
-    print('NIK: $_nik');
-    print('Pekerjaan: $_pekerjaan');
-    print('Jabatan: $_jabatan');
-    print('Pendidikan Terakhir: $_pendidikanTerakhir');
-    print('Status Kawin: $_statusKawin');
-    print('Agama: $_agama');
-    print('Alamat: $_alamat');
-    print('NIP: $_nip');
-  }
 
   @override
   Widget build(BuildContext context) {
+    final profileNotifier = Provider.of<ProfileNotifier>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Edit Profile'),
@@ -139,48 +122,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // NIK
                 TextFormField(
+                  initialValue: profileNotifier.nik,
                   decoration: InputDecoration(labelText: 'NIK'),
                   keyboardType: TextInputType.number,
-                  onChanged: (value) => _nik = value,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'NIK tidak boleh kosong';
-                    }
-                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                      return 'NIK hanya boleh berisi angka';
-                    }
-                    return null;
-                  },
+                  onChanged: (value) => profileNotifier.updateNik(value),
                 ),
                 const SizedBox(height: 16.0),
-                // NIK
                 TextFormField(
+                  initialValue: profileNotifier.nip,
                   decoration: InputDecoration(labelText: 'NIP'),
                   keyboardType: TextInputType.number,
-                  onChanged: (value) => _nip = value,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'NIP tidak boleh kosong';
-                    }
-                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                      return 'NIP hanya boleh berisi angka';
-                    }
-                    return null;
-                  },
+                  onChanged: (value) => profileNotifier.updateNip(value),
                 ),
                 const SizedBox(height: 16.0),
-                // Nama
                 TextFormField(
+                  initialValue: profileNotifier.name,
                   decoration: InputDecoration(labelText: 'Nama'),
-                  onChanged: (value) => _nama = value,
+                  onChanged: (value) => profileNotifier.updateName(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Jenis Kelamin
                 DropdownButtonFormField<String>(
-                  value: _jenisKelamin,
+                  value: profileNotifier.gender,
                   decoration: InputDecoration(labelText: 'Jenis Kelamin'),
                   items: ['L', 'P'].map((gender) {
                     return DropdownMenuItem(
@@ -188,15 +151,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Text(gender == 'L' ? 'Laki-laki' : 'Perempuan'),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() {
-                    _jenisKelamin = value;
-                  }),
+                  onChanged: (value) => profileNotifier.updateGender(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Golongan Darah
                 DropdownButtonFormField<String>(
-                  value: _golDarah,
+                  value: profileNotifier.bloodType,
                   decoration: InputDecoration(labelText: 'Golongan Darah'),
                   items: ['A', 'B', 'AB', 'O'].map((bloodType) {
                     return DropdownMenuItem(
@@ -204,94 +163,102 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Text(bloodType),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() {
-                    _golDarah = value;
-                  }),
+                  onChanged: (value) => profileNotifier.updateBloodType(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Tempat Lahir
                 TextFormField(
+                  initialValue: profileNotifier.birthPlace,
                   decoration: InputDecoration(labelText: 'Tempat Lahir'),
-                  onChanged: (value) => _tempatLahir = value,
+                  onChanged: (value) => profileNotifier.updateBirthPlace(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Tanggal Lahir (DatePicker)
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Tanggal Lahir'),
                   readOnly: true,
+                  controller: TextEditingController(text: profileNotifier.birthDate),
                   onTap: () => _selectDate(context),
-                  controller: TextEditingController(text: _tanggalLahir),
                 ),
-
-                // Pekerjaan
+                const SizedBox(height: 16.0),
                 TextFormField(
+                  initialValue: profileNotifier.job,
                   decoration: InputDecoration(labelText: 'Pekerjaan'),
-                  onChanged: (value) => _pekerjaan = value,
+                  onChanged: (value) => profileNotifier.updateJob(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Jabatan
                 TextFormField(
+                  initialValue: profileNotifier.position,
                   decoration: InputDecoration(labelText: 'Jabatan'),
-                  onChanged: (value) => _jabatan = value,
+                  onChanged: (value) => profileNotifier.updatePosition(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Pendidikan Terakhir
                 TextFormField(
+                  initialValue: profileNotifier.lastEducation,
                   decoration: InputDecoration(labelText: 'Pendidikan Terakhir'),
-                  onChanged: (value) => _pendidikanTerakhir = value,
+                  onChanged: (value) => profileNotifier.updateLastEducation(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Status Kawin
                 DropdownButtonFormField<String>(
-                  value: _statusKawin,
+                  value: profileNotifier.maritalStatus,
                   decoration: InputDecoration(labelText: 'Status Kawin'),
-                  items: ['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'].map((status) {
+                  items: ['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'].map((maritalStatus) {
                     return DropdownMenuItem(
-                      value: status,
-                      child: Text(status),
+                      value: maritalStatus,
+                      child: Text(maritalStatus),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() {
-                    _statusKawin = value;
-                  }),
+                  onChanged: (value) => profileNotifier.updateMaritalStatus(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Agama
                 DropdownButtonFormField<String>(
-                  value: _agama,
+                  value: profileNotifier.religion,
                   decoration: InputDecoration(labelText: 'Agama'),
-                  items: ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha', 'Konghucu'].map((religion) {
+                  items: ['Islam', 'Kristen', 'Hindu', 'Budha', 'Konghucu'].map((religion) {
                     return DropdownMenuItem(
                       value: religion,
                       child: Text(religion),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() {
-                    _agama = value;
-                  }),
+                  onChanged: (value) => profileNotifier.updateReligion(value),
                 ),
                 const SizedBox(height: 16.0),
-
-                // Alamat
                 TextFormField(
+                  initialValue: profileNotifier.address,
                   decoration: InputDecoration(labelText: 'Alamat'),
-                  onChanged: (value) => _alamat = value,
+                  onChanged: (value) => profileNotifier.updateAddress(value),
                 ),
-                const SizedBox(height: 24.0),
-
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      _printValues(); // Print form values to console
-                    }
-                  },
-                  child: Text('Simpan'),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  initialValue: profileNotifier.termStart.toString(),
+                  decoration: InputDecoration(labelText: 'Masa Jabatan Mulai'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => profileNotifier.updateTermStart(int.tryParse(value) ?? 0),
+                ),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  initialValue: profileNotifier.termEnd.toString(),
+                  decoration: InputDecoration(labelText: 'Masa Jabatan Selesai'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => profileNotifier.updateTermEnd(int.tryParse(value) ?? 0),
+                ),
+                const SizedBox(height: 32.0),
+                InkWell(
+                  onTap: () => _updateProfile(),
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      color: Colors.blue,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Update Profile",
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

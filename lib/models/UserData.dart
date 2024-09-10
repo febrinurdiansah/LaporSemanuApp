@@ -5,7 +5,6 @@ class UserProfile {
   final String maritalStatus;
   final String position;
   final String religion;
-  final int termStart;
   final String lastEducation;
   final String nik;
   final int id;
@@ -14,6 +13,7 @@ class UserProfile {
   final String job;
   final String bloodType;
   final String gender;
+  final int termStart;
   final int termEnd;
   final String image;
 

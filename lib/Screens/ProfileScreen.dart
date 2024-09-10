@@ -1,14 +1,11 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:monkir/Screens/EditProfileScreen.dart';
 import 'package:monkir/Screens/LoginScreen.dart';
 import 'package:monkir/widgets/theme_notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/UserData.dart';
+import '../models/ProfileModel.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -17,14 +14,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String _appVersion = '';
-  UserProfile? _userProfile;
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _fetchAppVersion();
-    _fetchUserProfile();
   }
 
   // Get app version
@@ -35,65 +29,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  // Get token from SharedPreferences
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('auth_token');
-    print('Token diambil dari SharedPreferences: $token');
-    return token;
-  }
-
-  // Fetch user profile data
-  Future<void> _fetchUserProfile() async {
-    final token = await _getToken();
-    if (token == null) {
-      // Handle case where token is not found
-      print('No token found');
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    final url = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/pamong/'; // Replace with your API URL
-
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _userProfile = UserProfile.fromJson(data);
-          _isLoading = false;
-        });
-      } else {
-        print('Failed to load user profile');
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('Error: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final profileModel = Provider.of<ProfileModel>(context);
     final themeNotifier = Provider.of<ThemeNotifier>(context);
+    final profileNotifier = Provider.of<ProfileNotifier>(context);
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
+    return Consumer<ProfileModel>(
+      builder: (context, profileModel, child) {
+        return Scaffold(
         backgroundColor: Colors.green,
-        body: _isLoading
+        body: profileModel.isLoading
             ? Center(child: CircularProgressIndicator())
             : Align(
                 alignment: Alignment.center,
@@ -105,17 +51,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       CircleAvatar(
                         radius: 50,
                         backgroundImage: NetworkImage(
-                          _userProfile?.image ?? 'https://via.placeholder.com/150',
+                          profileModel.userProfile?.image ?? 'https://via.placeholder.com/150',
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _userProfile?.name ?? 'N/A',
+                        profileModel.userProfile?.name ?? 'N/A',
                         style: TextStyle(fontSize: 18),
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _userProfile?.position ?? 'Position',
+                        profileModel.userProfile?.position ?? 'Position',
                         style: TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 30),
@@ -152,11 +98,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           style: Theme.of(context).textTheme.headlineSmall,
                                         ),
                                         IconButton(
-                                          onPressed: () => Navigator.push( context, MaterialPageRoute(
-                                            builder: (context) => EditProfileScreen(userProfile: _userProfile!,),
-                                            )), 
-                                          icon: Icon(Icons.edit)
-                                          )
+                                          onPressed: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => EditProfileScreen(userProfile: profileModel.userProfile!),
+                                            ),
+                                          ),
+                                          icon: Icon(Icons.edit),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 12),
@@ -164,55 +113,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       context,
                                       icon: Icons.badge,
                                       title: 'NIP',
-                                      actionText: _userProfile?.nip ?? 'N/A',
+                                      actionText: profileModel.userProfile?.nip ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.perm_identity,
                                       title: 'NIK',
-                                      actionText: _userProfile?.nik ?? 'N/A',
+                                      actionText: profileModel.userProfile?.nik ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.person,
                                       title: 'Gender',
-                                      actionText: _userProfile?.gender ?? 'N/A',
+                                      actionText: profileModel.userProfile?.gender ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.bloodtype,
                                       title: 'Blood Type',
-                                      actionText: _userProfile?.bloodType ?? 'N/A',
+                                      actionText: profileModel.userProfile?.bloodType ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.local_hospital,
+                                      title: 'Date of Birth',
+                                      actionText: profileModel.userProfile?.birthPlace ?? 'N/A'
+                                    ),
+                                    _buildSettingItem(
+                                      context,
+                                      icon: Icons.date_range,
                                       title: 'Birth Place',
-                                      actionText: '${_userProfile?.birthPlace ?? 'N/A'}, ${_userProfile?.birthDate ?? 'N/A'}',
+                                      actionText:  profileModel.userProfile?.birthDate ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.place,
                                       title: 'Address',
-                                      actionText: _userProfile?.address ?? 'N/A',
+                                      actionText: profileModel.userProfile?.address ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.school,
                                       title: 'Last Education',
-                                      actionText: _userProfile?.lastEducation ?? 'N/A',
+                                      actionText: profileModel.userProfile?.lastEducation ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.safety_check,
                                       title: 'Marital Status',
-                                      actionText: _userProfile?.maritalStatus ?? 'N/A',
+                                      actionText: profileModel.userProfile?.maritalStatus ?? 'N/A',
                                     ),
                                     _buildSettingItem(
                                       context,
                                       icon: Icons.work_history_outlined,
                                       title: 'Term Duration',
-                                      actionText: '${_userProfile?.termStart ?? 'N/A'} - ${_userProfile?.termEnd ?? 'N/A'}',
+                                      actionText: '${profileModel.userProfile?.termStart ?? 'N/A'} - ${profileModel.userProfile?.termEnd ?? 'N/A'}',
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
@@ -231,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       icon: Icons.dark_mode,
                                       title: 'Dark Mode',
                                       actionWidget: Switch(
-                                        value: themeNotifier.isDarkMode, 
+                                        value: themeNotifier.isDarkMode,
                                         onChanged: (value) {
                                           themeNotifier.toggleDarkMode();
                                         },
@@ -240,13 +195,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 20),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(context, 
-                                    MaterialPageRoute(
-                                      builder: (context) => LoginScreen()));
-                                  }, 
-                                  child: Text('Logout'),
+                                InkWell(
+                                  onTap: () => Navigator.push(context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LoginScreen(),
+                                      ),
+                                    ),
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                                      color: Colors.red,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "Logout",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -257,7 +227,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-      ),
+        );
+      },
     );
   }
 
@@ -298,3 +269,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
