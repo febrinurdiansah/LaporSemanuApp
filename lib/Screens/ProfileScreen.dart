@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:monkir/Screens/EditProfileScreen.dart';
-import 'package:monkir/Screens/LoginScreen.dart';
 import 'package:monkir/widgets/theme_notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -31,14 +30,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profileModel = Provider.of<ProfileModel>(context);
     final themeNotifier = Provider.of<ThemeNotifier>(context);
-    final profileNotifier = Provider.of<ProfileNotifier>(context);
 
     return Consumer<ProfileModel>(
       builder: (context, profileModel, child) {
         return Scaffold(
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.blue,
         body: profileModel.isLoading
             ? Center(child: CircularProgressIndicator())
             : Align(
@@ -196,11 +193,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 20),
                                 InkWell(
-                                  onTap: () => Navigator.push(context,
-                                      MaterialPageRoute(
-                                        builder: (context) => LoginScreen(),
-                                      ),
-                                    ),
+                                  onTap: () async {
+                                    await profileModel.logout(context);
+                                  },
                                   child: Container(
                                     width: double.infinity,
                                     height: 50,

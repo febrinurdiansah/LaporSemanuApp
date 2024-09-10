@@ -54,6 +54,16 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isLoading = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No token found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
       return;
     }
 

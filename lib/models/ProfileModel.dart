@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../Screens/LoginScreen.dart';
 import '../models/UserData.dart';
 
 class ProfileModel extends ChangeNotifier {
@@ -55,6 +56,16 @@ class ProfileModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token'); 
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+    );
+  }
+
 }
 
 

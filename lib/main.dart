@@ -1,9 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:monkir/Screens/CalendarScreen.dart';
-import 'package:monkir/Screens/EditProfileScreen.dart';
-import 'package:monkir/Screens/RegisterScreen.dart';
-import 'package:monkir/models/UserData.dart';
 import 'package:provider/provider.dart';
 import 'package:monkir/Screens/HomeScreen.dart';
 import 'package:monkir/Screens/LoginScreen.dart';
@@ -12,6 +8,8 @@ import 'package:monkir/Screens/WorkScreen.dart';
 import 'package:monkir/widgets/theme_notifier.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:device_preview_plus/device_preview_plus.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/ProfileModel.dart';
 
@@ -47,12 +45,20 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _checkLoginStatus() async {
-    //fungsi login
-    await Future.delayed(Duration(seconds: 2));
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+  
+  if (token != null && token.isNotEmpty) {
+    setState(() {
+      _isLoggedIn = true;
+    });
+  } else {
     setState(() {
       _isLoggedIn = false;
     });
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -62,20 +68,18 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
       themeMode: themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      // home: HomeScreen(),
-      home: _isLoggedIn ? MainScreen() : RegisterScreen(),
+      home: _isLoggedIn ? MainScreen() : LoginScreen(),
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
-
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-   int _currentIndex = 0;
+  int _currentIndex = 0;
 
   final List<Widget> _screens = [
     HomeScreen(),
@@ -86,38 +90,45 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: _screens,
+      body: Consumer<ProfileModel>(
+        builder: (context, profileModel, child) {
+          if (profileModel.userProfile == null) {
+            return Center(child: LoadingAnimationWidget.threeRotatingDots(
+                color: Colors.blue, 
+                size: 20
+                ));
+          }
+          return IndexedStack(
+            index: _currentIndex,
+            children: _screens,
+          );
+        },
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: SalomonBottomBar(
+          currentIndex: _currentIndex,
+          onTap: (i) => setState(() => _currentIndex = i),
+          items: [
+            SalomonBottomBarItem(
+              icon: Icon(Icons.home),
+              title: Text("Home"),
+              selectedColor: Colors.purple,
+            ),
+            SalomonBottomBarItem(
+              icon: Icon(Icons.work),
+              title: Text("Work"),
+              selectedColor: Colors.brown,
+            ),
+            SalomonBottomBarItem(
+              icon: Icon(Icons.person),
+              title: Text("Profile"),
+              selectedColor: Colors.teal,
+            ),
+          ],
         ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: SalomonBottomBar(
-            currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
-            items: [
-              /// Home
-              SalomonBottomBarItem(
-                icon: Icon(Icons.home),
-                title: Text("Home"),
-                selectedColor: Colors.purple,
-              ),
-              /// Likes
-              SalomonBottomBarItem(
-                icon: Icon(Icons.work),
-                title: Text("Work"),
-                selectedColor: Colors.brown,
-              ),
-              /// Profile
-              SalomonBottomBarItem(
-                icon: Icon(Icons.person),
-                title: Text("Profile"),
-                selectedColor: Colors.teal,
-              ),
-            ],
-          ),
-        ),
-      );
+      ),
+    );
   }
 }
 
