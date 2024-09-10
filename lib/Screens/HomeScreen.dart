@@ -4,12 +4,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:monkir/Screens/LoginScreen.dart';
+import 'package:monkir/models/ProfileModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:card_swiper/card_swiper.dart';
+import 'package:provider/provider.dart';
 
 import '../models/UserData.dart';
 import 'CalendarScreen.dart';
@@ -36,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState(){
     super.initState();
+    FocusScope.of(context).unfocus();
     _fetchUserProfile();
   }
   // Get token from SharedPreferences
@@ -131,125 +134,131 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: scaffoldKey,
-      appBar: AppBar(
-        title: Text('Kelurahan Semanu'),
-        automaticallyImplyLeading: false,
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? Center(child: LoadingAnimationWidget.threeRotatingDots(
-                color: Colors.blue, 
-                size: 20
-                ))
-            : SingleChildScrollView(
-                physics: BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  child: Column(
-                    children: [
-                      // Greeting and profile section
-                      _buildGreetingSection(),
-                      const SizedBox(height: 16.0),
-                      
-                      // Event section
-                      Row(
+    return Consumer<ProfileModel>(
+      builder: (context, profileModel, child) {
+        if (profileModel.userProfile == null) {
+          return Center(
+            child: LoadingAnimationWidget.threeRotatingDots(
+              color: Colors.blue, 
+              size: 20
+              ));
+            }
+        return Scaffold(
+          key: scaffoldKey,
+          appBar: AppBar(
+            title: Text('Kelurahan Semanu'),
+            automaticallyImplyLeading: false,
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+                    physics: BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      child: Column(
                         children: [
-                          Text(_dateTimeNow, style: TextStyle(fontSize: 20)),
-                          Spacer(),
-                          IconButton(
-                            icon: Icon(Icons.arrow_forward_sharp),
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => CalendarScreen()));
-                            },
+                          // Greeting and profile section
+                          _buildGreetingSection(profileModel),
+                          const SizedBox(height: 16.0),
+                          
+                          // Event section
+                          Row(
+                            children: [
+                              Text(_dateTimeNow, style: TextStyle(fontSize: 20)),
+                              Spacer(),
+                              IconButton(
+                                icon: Icon(Icons.arrow_forward_sharp),
+                                onPressed: () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => CalendarScreen()));
+                                },
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 16.0),
-                      todayEvents.isNotEmpty
-                          ? todayEvents.length > 1
-                              ? SizedBox(
-                                  height: 150,
-                                  child: Swiper(
-                                    itemCount: todayEvents.length,
-                                    itemBuilder: (context, index) {
-                                      final event = todayEvents[index];
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                                        border: Border.all(
-                                          width: 1,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                        child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(event.title, style: TextStyle(fontSize: 18)),
-                                          const SizedBox(height: 5),
-                                          Text(event.place, style: TextStyle(fontSize: 16)),
-                                          const SizedBox(height: 20),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                            children: [
-                                              Text(event.formattedStartTime, style: TextStyle(fontSize: 20)),
-                                              Icon(Icons.keyboard_double_arrow_right, size: 32, color: Colors.blue),
-                                              Text(event.formattedEndTime, style: TextStyle(fontSize: 20)),
-                                            ],
-                                          ),
-                                        ],
-                                        ),
-                                      );
-                                    },
-                                    pagination: SwiperPagination(),
-                                    scale: 0.9,
-                                    scrollDirection: Axis.horizontal,
-                                    loop: false,
-                                  ),
-                                )
-                              : Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                          const SizedBox(height: 16.0),
+                          todayEvents.isNotEmpty
+                              ? todayEvents.length > 1
+                                  ? SizedBox(
                                       height: 150,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                                        border: Border.all(
-                                          width: 1,
-                                          color: Colors.black,
-                                        ),
+                                      child: Swiper(
+                                        itemCount: todayEvents.length,
+                                        itemBuilder: (context, index) {
+                                          final event = todayEvents[index];
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                                            border: Border.all(
+                                              width: 1,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                            child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(event.title, style: TextStyle(fontSize: 18)),
+                                              const SizedBox(height: 5),
+                                              Text(event.place, style: TextStyle(fontSize: 16)),
+                                              const SizedBox(height: 20),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                                children: [
+                                                  Text(event.formattedStartTime, style: TextStyle(fontSize: 20)),
+                                                  Icon(Icons.keyboard_double_arrow_right, size: 32, color: Colors.blue),
+                                                  Text(event.formattedEndTime, style: TextStyle(fontSize: 20)),
+                                                ],
+                                              ),
+                                            ],
+                                            ),
+                                          );
+                                        },
+                                        pagination: SwiperPagination(),
+                                        scale: 0.9,
+                                        scrollDirection: Axis.horizontal,
+                                        loop: false,
                                       ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(todayEvents[0].title, style: TextStyle(fontSize: 18)),
-                                    const SizedBox(height: 5),
-                                    Text(todayEvents[0].place, style: TextStyle(fontSize: 16)),
-                                    const SizedBox(height: 20),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    )
+                                  : Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                          height: 150,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                                            border: Border.all(
+                                              width: 1,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(todayEvents[0].formattedStartTime, style: TextStyle(fontSize: 20)),
-                                        Icon(Icons.keyboard_double_arrow_right, size: 32, color: Colors.blue),
-                                        Text(todayEvents[0].formattedEndTime, style: TextStyle(fontSize: 20)),
+                                        Text(todayEvents[0].title, style: TextStyle(fontSize: 18)),
+                                        const SizedBox(height: 5),
+                                        Text(todayEvents[0].place, style: TextStyle(fontSize: 16)),
+                                        const SizedBox(height: 20),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                          children: [
+                                            Text(todayEvents[0].formattedStartTime, style: TextStyle(fontSize: 20)),
+                                            Icon(Icons.keyboard_double_arrow_right, size: 32, color: Colors.blue),
+                                            Text(todayEvents[0].formattedEndTime, style: TextStyle(fontSize: 20)),
+                                          ],
+                                        ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                              )
-                          : Center(child: Text("Tidak ada event untuk hari ini", style: TextStyle(fontSize: 16))),
-                    ],
+                                  )
+                              : Center(child: Text("Tidak ada event untuk hari ini", style: TextStyle(fontSize: 16))),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-      ),
+          ),
+        );
+      }
     );
   }
 
-  Widget _buildGreetingSection() {
+  Widget _buildGreetingSection(dynamic profileModel) {
     String getTime = '';
     String getQuots = '';
     int hours = DateTime.now().hour;
@@ -276,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Shimmer(
-                child: Text('$getTime, ${_userProfile?.name ?? 'N/A'}',
+                child: Text('$getTime, ${profileModel.userProfile?.name ?? 'N/A'}',
                     style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 8.0),

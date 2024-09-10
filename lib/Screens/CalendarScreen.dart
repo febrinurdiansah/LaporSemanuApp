@@ -159,7 +159,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
-            locale: 'en_US',
+            locale: 'id_ID',
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             eventLoader: _getEventsForDay,
             startingDayOfWeek: StartingDayOfWeek.monday,

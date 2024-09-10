@@ -60,7 +60,7 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
         child: Column(
           children: [
             Text('Silakan isi email di bawah ini. Lalu tunggu untuk mendapatkan email',
@@ -68,7 +68,7 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
                 fontSize: 16
               )
             ),
-            SizedBox(height: 25,),
+            SizedBox(height: 30,),
             TextFormField(
               controller: _emailCtrl,
               decoration: InputDecoration(

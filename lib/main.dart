@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:monkir/Screens/HomeScreen.dart';
 import 'package:monkir/Screens/LoginScreen.dart';
@@ -10,10 +11,14 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:device_preview_plus/device_preview_plus.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'models/ProfileModel.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize locale data for your application
+  await initializeDateFormatting('id_ID', null);
   runApp(
     DevicePreview(
       enabled: !kReleaseMode,
@@ -64,6 +69,15 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
     return MaterialApp(
+      locale: Locale('id', 'ID'),  // Locale Indonesia
+      supportedLocales: [
+        Locale('id', 'ID'),  // Tambahkan locale yang digunakan
+      ],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),

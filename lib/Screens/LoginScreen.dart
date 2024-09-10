@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:monkir/Screens/ForgetPass.dart';
 import 'package:monkir/Screens/RegisterScreen.dart';
 import 'package:monkir/main.dart';
@@ -15,6 +16,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   bool _obscureText = true;
+  bool isLoading = false;
   TextEditingController _userCtrl = TextEditingController();
   TextEditingController _passCtrl = TextEditingController();
 
@@ -34,6 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return;
     }
+
+    setState(() {
+      isLoading = true;
+    });
 
     try {
       Response response = await post(
@@ -80,6 +86,10 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -240,6 +250,12 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             },
           ),
+          if (isLoading) 
+            Center(
+            child: LoadingAnimationWidget.threeRotatingDots(
+              color: Colors.blue, 
+              size: 20
+              ))
         ],
       ),
     );

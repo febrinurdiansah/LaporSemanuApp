@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:monkir/Screens/EditProfileScreen.dart';
 import 'package:monkir/widgets/theme_notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -37,7 +38,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Scaffold(
         backgroundColor: Colors.blue,
         body: profileModel.isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? Center(
+                child: LoadingAnimationWidget.threeRotatingDots(
+                  color: Colors.blue, 
+                  size: 20
+                  ))
             : Align(
                 alignment: Alignment.center,
                 child: Padding(
@@ -52,14 +57,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        profileModel.userProfile?.name ?? 'N/A',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        profileModel.userProfile?.position ?? 'Position',
-                        style: TextStyle(fontSize: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            profileModel.userProfile?.name ?? 'N/A',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            profileModel.userProfile?.position ?? 'Position',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 30),
                       Expanded(
