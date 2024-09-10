@@ -57,19 +57,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            profileModel.userProfile?.name ?? 'N/A',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            profileModel.userProfile?.position ?? 'Position',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
+                      Text(
+                        profileModel.userProfile?.name ?? 'N/A',
+                        style: TextStyle(fontSize: 18),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        profileModel.userProfile?.position ?? 'Position',
+                        style: TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 30),
                       Expanded(
