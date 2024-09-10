@@ -27,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String _dateTimeNow = DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now());
   List<Event> todayEvents = [];
-  final CarouselController _carouselController = CarouselController();
 
   LinkedHashMap<DateTime, List<Event>> kEvents = LinkedHashMap<DateTime, List<Event>>(
     equals: isSameDay,
@@ -60,15 +59,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final urlUsers = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/pamong/'; 
     final urlEvent = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/agenda/';
-    final today = DateTime.now();
 
     try {
       // Fetch user profile
       final userResponse = await http.get(
         Uri.parse(urlUsers),
         headers: {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJxd2VydHkiLCJpZCI6MTEsImlzX2FkbWluIjpmYWxzZSwiZXhwIjoxNzI2NTE0NzYyfQ.wNSkMReHOoM6yhsnnApEt7PIUDws91Dc8ChRNLd2CTI',
-          // 'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $token',
         },
       );
       if (userResponse.statusCode == 200) {
@@ -84,8 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final eventResponse = await http.get(
         Uri.parse(urlEvent),
         headers: {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJxd2VydHkiLCJpZCI6MTEsImlzX2FkbWluIjpmYWxzZSwiZXhwIjoxNzI2NTE0NzYyfQ.wNSkMReHOoM6yhsnnApEt7PIUDws91Dc8ChRNLd2CTI',
-          // 'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -125,10 +121,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    TextStyle _style = TextStyle(
-      fontSize: 16,
-    );
-
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
