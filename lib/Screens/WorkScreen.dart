@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:monkir/Screens/FailedScreen.dart';
-import 'package:monkir/Screens/SuccessScreen.dart';
+import 'package:lottie/lottie.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 import 'package:http/http.dart' as http;
@@ -18,10 +17,21 @@ class _WorkScreenState extends State<WorkScreen> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
   List<DateTime>? dateTimeList;
+  FocusNode _focusNode = FocusNode();
+  FocusNode _focusNode2 = FocusNode();
 
-  final TextEditingController _activityController = TextEditingController();
+  String? _selectedActivity;
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _placeController = TextEditingController();
+
+  final List<String> _activityOptions = [
+    'Seni & Budaya',
+    'Pembangunan',
+    'Pemberdayaan',
+    'Pemerintahan',
+    'Darurat (Bencana)',
+    'KAMTIBNAS'
+  ];
 
   Future<void> _pickerImage(ImageSource source) async {
     final pickedFile = await _picker.pickImage(source: source);
@@ -48,39 +58,33 @@ class _WorkScreenState extends State<WorkScreen> {
   }
 
   Future<void> _submitActivity() async {
-    if (dateTimeList == null || _activityController.text.isEmpty || _descController.text.isEmpty || _placeController.text.isEmpty) {
+    if (dateTimeList == null || _selectedActivity == null || _descController.text.isEmpty || _placeController.text.isEmpty) {
       // Handle error case: if fields are empty
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill all fields.'))
+        SnackBar(content: Text('Tolong isi semua kolomnya.'))
       );
       return;
     }
-    final url = Uri.parse('https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/kegiatan/');
     
-    // Ambil token dari SharedPreferences
+    final url = Uri.parse('https://laporsemanu.my.id/api/kegiatan/');
     String? token = await _getToken();
 
-    // Cek apakah token tersedia
     if (token == null) {
       print('Token tidak ditemukan');
       return;
     }
 
-    // Membuat permintaan multipart
     var request = http.MultipartRequest('POST', url);
-    // Menambahkan header Authorization dengan token yang diambil
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Content-Type'] = 'multipart/form-data';
 
-    // Menambahkan data kegiatan dalam bentuk string
     request.fields['kegiatan'] = jsonEncode({
-      "nama_kegiatan": _activityController.text,
+      "nama_kegiatan": _selectedActivity,
       "tanggal": DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').format(dateTimeList![0]),
       "tempat": _placeController.text,
       "deskripsi": _descController.text,
     });
 
-    // Menambahkan file jika ada (opsional)
     if (_imageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
         'file', 
@@ -88,24 +92,66 @@ class _WorkScreenState extends State<WorkScreen> {
       ));
     }
 
-    final response = await request.send();
-    // Memeriksa status respons
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      print('Data berhasil dikirim');
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SuccessScreen())
-      );
-      // Lakukan hal lain jika sukses
-    } else {
-      print('Gagal mengirim data: ${response.statusCode}');
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => FailedScreen())
-      );
-      final responseBody = await response.stream.bytesToString();
-      print('Response body: $responseBody');
+    showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            final double width = MediaQuery.of(context).size.width;
+            return Dialog(
+              backgroundColor: Theme.of(context).colorScheme.background,
+              shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              ),
+              child: Container(
+                width: width * 0.8,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 10),
+                    Lottie.asset(
+                      'lib/assets/lottie/animation-loading.json', 
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.fill,
+                    ),
+                    SizedBox(height: 20),
+                    Text('Loading...',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18, 
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.background,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+
+    try {
+      final response = await request.send();
+      Navigator.of(context).pop();
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _showResultDialog('Berhasil Mengirim', 'lib/assets/lottie/animation-success.json', 'Done');
+      } else {
+        print('Gagal mengirim data: ${response.statusCode}');
+         _showResultDialog('Gagal Mengirim', 'lib/assets/lottie/animation-failed.json', 'Ulangi');
+      }
+    } catch (e) {
+      print('Error: $e');
+      Navigator.of(context).pop();
+      _showResultDialog('Gagal Mengirim', 'lib/assets/lottie/animation-failed.json', 'Ulangi'); 
     }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _focusNode2.dispose();
+    super.dispose();
   }
 
   @override
@@ -139,10 +185,21 @@ class _WorkScreenState extends State<WorkScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextFormField(
-                        controller: _activityController,
+                      DropdownButtonFormField<String>(
+                        value: _selectedActivity,
+                        items: _activityOptions.map((String option) {
+                          return DropdownMenuItem<String>(
+                            value: option,
+                            child: Text(option),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _selectedActivity = newValue;
+                          });
+                        },
                         decoration: InputDecoration(
-                          labelText: 'Kegiatan',
+                          labelText: 'Pilih Nama Kegiatan',
                           enabledBorder: OutlineInputBorder(
                             borderSide: const BorderSide(width: 2.0),
                             borderRadius: BorderRadius.circular(12.0),
@@ -157,11 +214,12 @@ class _WorkScreenState extends State<WorkScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        focusNode: _focusNode,
                         minLines: 5,
                         maxLines: null,
                         controller: _descController,
                         decoration: InputDecoration(
-                          labelText: 'Description...',
+                          labelText: 'Deskripsi...',
                           enabledBorder: OutlineInputBorder(
                             borderSide: const BorderSide(width: 2.0),
                             borderRadius: BorderRadius.circular(12.0),
@@ -176,7 +234,7 @@ class _WorkScreenState extends State<WorkScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Due Date'),
+                      const Text('Tanggal'),
                       InkWell(
                         onTap: () async {
                           List<DateTime>? selectedDates = await showOmniDateTimeRangePicker(
@@ -226,7 +284,7 @@ class _WorkScreenState extends State<WorkScreen> {
                           alignment: AlignmentDirectional.centerStart,
                           child: Text(
                             dateTimeList == null
-                            ? 'Select a date'
+                            ? 'Pilih Tanggal'
                             : formatDateRange(dateTimeList!),
                             style: const TextStyle(fontSize: 16),
                             ),
@@ -234,6 +292,7 @@ class _WorkScreenState extends State<WorkScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        focusNode: _focusNode2,
                         controller: _placeController,
                         decoration: InputDecoration(
                           labelText: 'Tempat',
@@ -258,16 +317,16 @@ class _WorkScreenState extends State<WorkScreen> {
                           borderRadius: BorderRadius.circular(12.0),
                           child: _imageFile != null
                           ? Image.file(
-                            _imageFile!,
-                            width: double.infinity,
-                            height: 200,
-                            fit: BoxFit.cover,
+                              _imageFile!,
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover,
                           )
-                          : Image.network(
-                            'https://picsum.photos/seed/867/600',
-                            width: double.infinity,
-                            height: 200.0,
-                            fit: BoxFit.cover,
+                          : Image.asset(
+                              'lib/assets/img/no-image.jpg',
+                              width: double.infinity,
+                              height: 200.0,
+                              fit: BoxFit.cover,
                           ),
                         ),
                       ),
@@ -306,7 +365,7 @@ class _WorkScreenState extends State<WorkScreen> {
                           ),
                           child: Center(
                             child: Text(
-                              "Submit",
+                              "Simpan",
                               style: TextStyle(
                                 color: Colors.white,
                               ),
@@ -332,8 +391,8 @@ class _WorkScreenState extends State<WorkScreen> {
               _imageFile!,
               fit: BoxFit.contain,
             )
-          : Image.network(
-              'https://picsum.photos/seed/867/600',
+          : Image.asset(
+              'lib/assets/img/no-image.jpg',
               width: double.infinity,
               height: 200.0,
               fit: BoxFit.cover,
@@ -379,25 +438,116 @@ class _WorkScreenState extends State<WorkScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Submit Activity'),
-          content: Text('Are you sure you want to submit the activity?'),
+          title: Text('Submit Kegiatan'),
+          content: Text('Apakah anda yakin untuk mengirimkan kegiatan?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.all(5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                'Batalkan',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.red
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _submitActivity(); 
+                _submitActivity();
               },
-              child: Text('Submit'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.all(5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                'Simpan',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.green
+                ),
+              ),
             ),
           ],
         );
       }
+    );
+  }
+
+  void _showResultDialog(String message, String lottiePath, String massageButton) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        final double width = MediaQuery.of(context).size.width;
+        return Container(
+          padding: EdgeInsets.all(20),
+          child: Dialog(
+            backgroundColor: Theme.of(context).colorScheme.background,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Container(
+              width: width * 0.8,
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: 10),
+                  Lottie.asset(
+                    lottiePath,
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.fill,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    message,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    margin: EdgeInsets.all(20),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        minimumSize: Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: Text(
+                        massageButton,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.background,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

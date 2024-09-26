@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:monkir/Screens/ForgetPass.dart';
-import 'package:monkir/Screens/RegisterScreen.dart';
-import 'package:monkir/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
+import '../main.dart';
+import 'ForgetPass.dart';
+import 'RegisterScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_userCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Username dan Password tidak boleh kosong'),
+          content: Text('NIP dan Kata sandi tidak boleh kosong'),
           backgroundColor: Colors.red,
         ),
       );
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       Response response = await post(
-        Uri.parse('https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/auth/token'),
+        Uri.parse('https://laporsemanu.my.id/api/auth/token'),
         body: {
           'username': _userCtrl.text,
           'password': _passCtrl.text,
@@ -53,8 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body.toString());
         String token = data['access_token'];
-        print('Token: ${data['access_token']}');
-        print('Login successfully');
 
         await _saveToken(token);
         
@@ -96,19 +94,29 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
-    print('Token disimpan: $token');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
-      backgroundColor: Theme.of(context).secondaryHeaderColor,
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          // SvgPicture.asset('lib/assets/bg-login.svg',
-          // fit: BoxFit.cover,),
+          // Background dengan gradasi
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blue,
+                  Colors.teal,
+                ],
+              ),
+            ),
+          ),
+          // Konten Login
           LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -124,8 +132,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Center(
                             child: Text(
-                              'Logo/App name',
-                              style: TextStyle(fontSize: 24),
+                              'Lapor Semanu',
+                              style: TextStyle(
+                                fontSize: 24,
+                                color: Theme.of(context).colorScheme.background,
+                              ),
                             ),
                           ),
                           SizedBox(height: 30),
@@ -150,19 +161,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Text(
                                     'Login',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 18),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                    ),
                                   ),
                                   const SizedBox(height: 12.0),
                                   Text(
-                                    'Mari login dan bekerja seperti budak.',
+                                    'Pastikan username dan password anda benar.',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 16),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                    ),
                                   ),
                                   const SizedBox(height: 24.0),
                                   TextFormField(
                                     controller: _userCtrl,
                                     decoration: InputDecoration(
-                                      labelText: 'Username',
+                                      labelText: 'NIP',
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12.0),
                                       ),
@@ -175,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     controller: _passCtrl,
                                     obscureText: _obscureText,
                                     decoration: InputDecoration(
-                                      labelText: 'Password',
+                                      labelText: 'Kata Sandi',
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12.0),
                                       ),
@@ -193,10 +208,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     alignment: Alignment.centerRight,
                                     child: InkWell(
                                       onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ForgetPassScreen(),
-                                          )),
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ForgetPassScreen(),
+                                        ),
+                                      ),
                                       child: Text('Lupa Password?'),
                                     ),
                                   ),
@@ -229,19 +245,23 @@ class _LoginScreenState extends State<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Buat Akun?',
-                                style: TextStyle(color: Colors.blueAccent),
+                                'Belum Punya Akun?',
+                                style: TextStyle(color: Colors.black),
                               ),
                               SizedBox(width: 5),
                               InkWell(
-                                  onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => RegisterScreen(),
-                                      )),
-                                  child: Text('Klik sini')),
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RegisterScreen(),
+                                  ),
+                                ),
+                                child: Text('Klik sini',
+                                  style: TextStyle(color: Colors.white),
+                                  ),
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -250,12 +270,13 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             },
           ),
-          if (isLoading) 
+          if (isLoading)
             Center(
-            child: LoadingAnimationWidget.threeRotatingDots(
-              color: Colors.blue, 
-              size: 20
-              ))
+              child: LoadingAnimationWidget.threeRotatingDots(
+                color: Colors.blue,
+                size: 30,
+              ),
+            ),
         ],
       ),
     );

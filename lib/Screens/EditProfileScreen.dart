@@ -67,7 +67,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _updateProfile() async {
   final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
   final token = await _getToken();
-  final url = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/pamong/'; // Replace with your API URL
+  final url = 'https://laporsemanu.my.id/api/pamong/'; 
 
   try {
     final request = http.MultipartRequest('PUT', Uri.parse(url))

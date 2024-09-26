@@ -1,4 +1,4 @@
-name: monkir
+name: LaporSemanu
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -48,7 +48,8 @@ dependencies:
   shimmer_animation: ^2.2.1
   table_calendar: ^3.1.2
   card_swiper: ^3.0.1
-  flutter_svg: ^2.0.10+1
+  lottie: ^3.1.2
+  flutter_native_splash: ^2.4.1
 
 dev_dependencies:
   flutter_test:
@@ -74,7 +75,13 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - lib/assets/svg/bg-login.svg
+    - lib/assets/lottie/animation-failed.json
+    - lib/assets/lottie/animation-loading.json
+    - lib/assets/lottie/animation-success.json
+    - lib/assets/img/no-image.jpg
+    - lib/assets/img/no-profil.jpg
+    - lib/assets/img/logo.png
+    - lib/assets/img/logo-gk.png
   fonts:
     - family: NotoSans
       fonts:

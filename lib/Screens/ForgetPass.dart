@@ -14,7 +14,7 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
     try {
       // Headers dan body diubah untuk JSON
       http.Response response = await http.post(
-        Uri.parse('https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/auth/forget-password'),
+        Uri.parse('https://laporsemanu.my.id/api/auth/forget-password/'),
         headers: {
           'Content-Type': 'application/json',
         },

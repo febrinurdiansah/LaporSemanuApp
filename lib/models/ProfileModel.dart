@@ -33,7 +33,7 @@ class ProfileModel extends ChangeNotifier {
       return;
     }
 
-    final url = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/pamong/';
+    final url = 'https://laporsemanu.my.id/api/pamong/';
 
     try {
       final response = await http.get(

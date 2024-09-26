@@ -89,7 +89,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return;
     }
 
-    final url = 'https://technological-adriena-taufiqdp-d94bbf04.koyeb.app/agenda/';
+    final url = 'https://laporsemanu.my.id/api/agenda/';
 
     try {
       final response = await http.get(
@@ -256,32 +256,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       itemCount: events.length,
                       itemBuilder: (context, index) {
                         return InkWell(
-                          onTap: () => showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text(events[index].title, style: TextStyle(fontWeight: FontWeight.bold)),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(height: 8.0),
-                                    Text('Deskripsi:\n${events[index].desc}'),
-                                    SizedBox(height: 8.0),
-                                    Text('Tempat: ${events[index].place}'),
-                                    SizedBox(height: 8.0),
-                                    Text('Waktu: ${events[index].formattedStartTime} - ${events[index].formattedEndTime}'),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context), 
-                                    child: Text('Kembali'),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                          onTap: () => _showDetailActivity(context, events, index),
                           child: Container(
                             margin: const EdgeInsets.symmetric(
                               horizontal: 12.0,
@@ -313,6 +288,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         ],
       ),
+    );
+  }
+
+  Future<dynamic> _showDetailActivity(BuildContext context, List<Event> events, int index) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(events[index].title, style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 8.0),
+              Text('Deskripsi:\n${events[index].desc}'),
+              SizedBox(height: 8.0),
+              Text('Tempat: ${events[index].place}'),
+              SizedBox(height: 8.0),
+              Text('Waktu: ${events[index].formattedStartTime} - ${events[index].formattedEndTime}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), 
+              child: Text('Kembali'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
