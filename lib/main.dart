@@ -127,17 +127,17 @@ class _MainScreenState extends State<MainScreen> {
             SalomonBottomBarItem(
               icon: Icon(Icons.home),
               title: Text("Home"),
-              selectedColor: Colors.purple,
+              selectedColor: Colors.blueAccent,
             ),
             SalomonBottomBarItem(
               icon: Icon(Icons.work),
               title: Text("Work"),
-              selectedColor: Colors.brown,
+              selectedColor: Colors.blueAccent,
             ),
             SalomonBottomBarItem(
               icon: Icon(Icons.person),
               title: Text("Profile"),
-              selectedColor: Colors.teal,
+              selectedColor: Colors.blueAccent,
             ),
           ],
         ),

@@ -13,25 +13,28 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  final _nipController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _nikCrtl = TextEditingController();
+  final _usnmCrtl = TextEditingController();
+  final _emailCrtl = TextEditingController();
+  final _pswdCrtl = TextEditingController();
   bool _obscureText = true;
 
   @override
   void dispose() {
-    _nipController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _nikCrtl.dispose();
+    _usnmCrtl.dispose();
+    _emailCrtl.dispose();
+    _pswdCrtl.dispose();
     super.dispose();
   }
 
   Future<void> _register() async {
-    final nip = _nipController.text;
-    final email = _emailController.text;
-    final password = _passwordController.text;
+    final nik = _nikCrtl.text;
+    final username = _usnmCrtl.text;
+    final email = _emailCrtl.text;
+    final password = _pswdCrtl.text;
 
-    if (nip.isEmpty || email.isEmpty || password.isEmpty) {
+    if (nik.isEmpty || username.isEmpty || email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red,
@@ -49,14 +52,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'nip': nip,
-        'username': nip,
+        'nik': nik,
+        'username': username,
         'password': password,
         'email': email,
       }),
     );
 
     if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green,
+          content: Text('Membuat akun berhasil!!'),
+        ),
+      );
+
+      await Future.delayed(Duration(seconds: 2));
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -86,8 +97,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Colors.blue, // Warna biru di pojok atas
-              Colors.teal, // Warna akhir gradasi (biru toska)
+              Colors.blue,
+              Colors.teal,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -151,9 +162,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 const SizedBox(height: 24.0),
                                 TextFormField(
-                                  controller: _nipController,
+                                  controller: _nikCrtl,
                                   decoration: InputDecoration(
-                                    labelText: 'NIP',
+                                    labelText: 'NIK',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12.0),
                                     ),
@@ -163,7 +174,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 const SizedBox(height: 16.0),
                                 TextFormField(
-                                  controller: _emailController,
+                                  controller: _usnmCrtl,
+                                  decoration: InputDecoration(
+                                    labelText: 'Username',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.0),
+                                    ),
+                                    filled: true,
+                                  ),
+                                  keyboardType: TextInputType.emailAddress,
+                                ),
+                                const SizedBox(height: 16.0),
+                                TextFormField(
+                                  controller: _emailCrtl,
                                   decoration: InputDecoration(
                                     labelText: 'Email',
                                     border: OutlineInputBorder(
@@ -175,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 const SizedBox(height: 16.0),
                                 TextFormField(
-                                  controller: _passwordController,
+                                  controller: _pswdCrtl,
                                   obscureText: _obscureText,
                                   decoration: InputDecoration(
                                     labelText: 'Kata Sandi',

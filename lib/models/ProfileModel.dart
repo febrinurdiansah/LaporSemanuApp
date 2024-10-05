@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../Screens/LoginScreen.dart';
 import '../models/UserData.dart';
 
 class ProfileModel extends ChangeNotifier {
@@ -57,14 +55,7 @@ class ProfileModel extends ChangeNotifier {
     }
   }
 
-  Future<void> logout(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token'); 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginScreen()),
-    );
-  }
+  
 
 }
 
@@ -72,27 +63,13 @@ class ProfileModel extends ChangeNotifier {
 
 class ProfileNotifier extends ChangeNotifier {
   // Define fields for profile data
-  String name = '';
   String? gender;
   String? bloodType;
-  String birthPlace = '';
   String? birthDate;
-  String nik = '';
-  String job = '';
-  String position = '';
-  String lastEducation = '';
   String? maritalStatus;
   String? religion;
-  String address = '';
-  String nip = '';
-  int termStart = 0;
-  int termEnd = 0;
 
   // Update profile fields
-  void updateName(String value) {
-    name = value;
-    notifyListeners();
-  }
 
   void updateGender(String? value) {
     gender = value;
@@ -104,33 +81,8 @@ class ProfileNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateBirthPlace(String value) {
-    birthPlace = value;
-    notifyListeners();
-  }
-
   void updateBirthDate(String? value) {
     birthDate = value;
-    notifyListeners();
-  }
-
-  void updateNik(String value) {
-    nik = value;
-    notifyListeners();
-  }
-
-  void updateJob(String value) {
-    job = value;
-    notifyListeners();
-  }
-
-  void updatePosition(String value) {
-    position = value;
-    notifyListeners();
-  }
-
-  void updateLastEducation(String value) {
-    lastEducation = value;
     notifyListeners();
   }
 
@@ -141,26 +93,6 @@ class ProfileNotifier extends ChangeNotifier {
 
   void updateReligion(String? value) {
     religion = value;
-    notifyListeners();
-  }
-
-  void updateAddress(String value) {
-    address = value;
-    notifyListeners();
-  }
-
-  void updateNip(String value) {
-    nip = value;
-    notifyListeners();
-  }
-
-  void updateTermStart(int value) {
-    termStart = value;
-    notifyListeners();
-  }
-
-  void updateTermEnd(int value) {
-    termEnd = value;
     notifyListeners();
   }
 }

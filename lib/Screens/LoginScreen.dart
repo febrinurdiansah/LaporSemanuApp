@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   bool _obscureText = true;
   bool isLoading = false;
-  TextEditingController _userCtrl = TextEditingController();
+  TextEditingController _usnmCrtl = TextEditingController();
   TextEditingController _passCtrl = TextEditingController();
 
   void _togglePasswordView() {
@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if (_userCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
+    if (_usnmCrtl.text.isEmpty || _passCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('NIP dan Kata sandi tidak boleh kosong'),
@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Response response = await post(
         Uri.parse('https://laporsemanu.my.id/api/auth/token'),
         body: {
-          'username': _userCtrl.text,
+          'username': _usnmCrtl.text,
           'password': _passCtrl.text,
         },
       );
@@ -53,6 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body.toString());
         String token = data['access_token'];
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
 
         await _saveToken(token);
         
@@ -175,9 +178,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 24.0),
                                   TextFormField(
-                                    controller: _userCtrl,
+                                    controller: _usnmCrtl,
                                     decoration: InputDecoration(
-                                      labelText: 'NIP',
+                                      labelText: 'Username',
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12.0),
                                       ),

@@ -2,11 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:lottie/lottie.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/ActivityModel.dart';
 
 class WorkScreen extends StatefulWidget {
   @override
@@ -16,13 +19,13 @@ class WorkScreen extends StatefulWidget {
 class _WorkScreenState extends State<WorkScreen> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
-  List<DateTime>? dateTimeList;
+  DateTime? selectedDate;
   FocusNode _focusNode = FocusNode();
   FocusNode _focusNode2 = FocusNode();
 
   String? _selectedActivity;
-  final TextEditingController _descController = TextEditingController();
-  final TextEditingController _placeController = TextEditingController();
+  final TextEditingController _descCrtl = TextEditingController();
+  final TextEditingController _placeCrtl = TextEditingController();
 
   final List<String> _activityOptions = [
     'Seni & Budaya',
@@ -30,7 +33,7 @@ class _WorkScreenState extends State<WorkScreen> {
     'Pemberdayaan',
     'Pemerintahan',
     'Darurat (Bencana)',
-    'KAMTIBNAS'
+    'KAMTIBMAS'
   ];
 
   Future<void> _pickerImage(ImageSource source) async {
@@ -42,24 +45,35 @@ class _WorkScreenState extends State<WorkScreen> {
     }
   }
 
-  String formatDateRange(List<DateTime> dateRange) {
-    final DateFormat formatter = DateFormat('yyyy-MM-dd');
-    String start = formatter.format(dateRange[0]);
-    String end = formatter.format(dateRange[1]);
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
 
-    return '$start to $end';
+  String formatSelectedDate(DateTime? date) {
+    if (date == null) {
+      return 'Pilih Tanggal';
+    }
+    return DateFormat('yyyy-MM-dd').format(date);
   }
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('auth_token');
-    print('Token diambil dari SharedPreferences: $token');
     return token;
   }
 
   Future<void> _submitActivity() async {
-    if (dateTimeList == null || _selectedActivity == null || _descController.text.isEmpty || _placeController.text.isEmpty) {
-      // Handle error case: if fields are empty
+    if (selectedDate == null || _selectedActivity == null || _descCrtl.text.isEmpty || _placeCrtl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Tolong isi semua kolomnya.'))
       );
@@ -74,16 +88,18 @@ class _WorkScreenState extends State<WorkScreen> {
       return;
     }
 
+    final newActivity = {
+      "nama_kegiatan": _selectedActivity,
+      "tanggal": DateFormat('yyyy-MM-dd').format(selectedDate!),
+      "tempat": _placeCrtl.text,
+      "deskripsi": _descCrtl.text,
+    };
+
+    //Send Data to API
     var request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['Content-Type'] = 'multipart/form-data';
-
-    request.fields['kegiatan'] = jsonEncode({
-      "nama_kegiatan": _selectedActivity,
-      "tanggal": DateFormat('yyyy-MM-ddTHH:mm:ss.SSS').format(dateTimeList![0]),
-      "tempat": _placeController.text,
-      "deskripsi": _descController.text,
-    });
+    request.fields['kegiatan'] = jsonEncode(newActivity);
 
     if (_imageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
@@ -93,48 +109,29 @@ class _WorkScreenState extends State<WorkScreen> {
     }
 
     showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            final double width = MediaQuery.of(context).size.width;
-            return Dialog(
-              backgroundColor: Theme.of(context).colorScheme.background,
-              shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              ),
-              child: Container(
-                width: width * 0.8,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 10),
-                    Lottie.asset(
-                      'lib/assets/lottie/animation-loading.json', 
-                      width: 150,
-                      height: 150,
-                      fit: BoxFit.fill,
-                    ),
-                    SizedBox(height: 20),
-                    Text('Loading...',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18, 
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.background,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          },
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return LoadingAnimationWidget.threeRotatingDots(
+        color: Colors.blue, 
+        size: 30
         );
+      },
+    );
 
     try {
       final response = await request.send();
       Navigator.of(context).pop();
       if (response.statusCode == 200 || response.statusCode == 201) {
+        //  Provider.of<ActivityModel>(context, listen: false).addActivity(newActivity);
+        setState(() {
+          _descCrtl.clear();
+          _placeCrtl.clear();
+          _selectedActivity = null;
+          selectedDate = null;
+          _imageFile = null;
+        });
+
         _showResultDialog('Berhasil Mengirim', 'lib/assets/lottie/animation-success.json', 'Done');
       } else {
         print('Gagal mengirim data: ${response.statusCode}');
@@ -217,7 +214,7 @@ class _WorkScreenState extends State<WorkScreen> {
                         focusNode: _focusNode,
                         minLines: 5,
                         maxLines: null,
-                        controller: _descController,
+                        controller: _descCrtl,
                         decoration: InputDecoration(
                           labelText: 'Deskripsi...',
                           enabledBorder: OutlineInputBorder(
@@ -235,65 +232,28 @@ class _WorkScreenState extends State<WorkScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text('Tanggal'),
+                      const SizedBox(height: 5),
                       InkWell(
-                        onTap: () async {
-                          List<DateTime>? selectedDates = await showOmniDateTimeRangePicker(
-                          context: context,
-                          startInitialDate: DateTime.now(),
-                          startFirstDate:DateTime(1600).subtract(const Duration(days: 3652)),
-                          startLastDate: DateTime.now().add( const Duration(days: 3652),),
-                          endInitialDate: DateTime.now(),
-                          endFirstDate: DateTime(1600).subtract(const Duration(days: 3652)),
-                          endLastDate: DateTime.now().add(const Duration(days: 3652), ),
-                          is24HourMode: true,
-                          minutesInterval: 1,
-                          secondsInterval: 1,
-                          borderRadius: const BorderRadius.all(Radius.circular(16)),
-                          constraints: const BoxConstraints(
-                            maxWidth: 350,
-                            maxHeight: 650,
-                          ),
-                          transitionBuilder: (context, anim1, anim2, child) {
-                            return FadeTransition(
-                              opacity: anim1.drive(
-                                Tween(
-                                  begin: 0,
-                                  end: 1,
-                                ),
-                              ),
-                              child: child,
-                            );
-                          },
-                          transitionDuration: const Duration(milliseconds: 200),
-                          barrierDismissible: true,
-                        );
-                        if (selectedDates != null){
-                          setState(() {
-                            dateTimeList = selectedDates;
-                          });
-                        }
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          height: 48.0,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.0),
-                            border: Border.all(width: 2.0),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(
-                            dateTimeList == null
-                            ? 'Pilih Tanggal'
-                            : formatDateRange(dateTimeList!),
-                            style: const TextStyle(fontSize: 16),
-                            ),
+                      onTap: () => _selectDate(context),
+                      child: Container(
+                        width: double.infinity,
+                        height: 48.0,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12.0),
+                          border: Border.all(width: 2.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          formatSelectedDate(selectedDate),
+                          style: const TextStyle(fontSize: 16),
                         ),
                       ),
+                    ),
                       const SizedBox(height: 16),
                       TextFormField(
                         focusNode: _focusNode2,
-                        controller: _placeController,
+                        controller: _placeCrtl,
                         decoration: InputDecoration(
                           labelText: 'Tempat',
                           enabledBorder: OutlineInputBorder(

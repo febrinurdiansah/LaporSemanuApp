@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,28 +20,62 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  File? _profileImage;
+  bool _isLoading = false;
+
+  // Create TextEditingControllers
+  late TextEditingController _nikController;
+  late TextEditingController _nipController;
+  late TextEditingController _nameController;
+  late TextEditingController _birthPlaceController;
+  late TextEditingController _birthDateController;
+  late TextEditingController _jobController;
+  late TextEditingController _positionController;
+  late TextEditingController _lastEducationController;
+  late TextEditingController _addressController;
+  late TextEditingController _termStartController;
+  late TextEditingController _termEndController;
 
   @override
   void initState() {
     super.initState();
-    final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
 
-    // Initialize fields with profile data
-    profileNotifier.updateName(widget.userProfile.name);
+    // Initialize TextEditingControllers with the user profile data
+    _nikController = TextEditingController(text: widget.userProfile.nik);
+    _nipController = TextEditingController(text: widget.userProfile.nip);
+    _nameController = TextEditingController(text: widget.userProfile.name);
+    _birthPlaceController = TextEditingController(text: widget.userProfile.birthPlace);
+    _birthDateController = TextEditingController(text: widget.userProfile.birthDate);
+    _jobController = TextEditingController(text: widget.userProfile.job);
+    _positionController = TextEditingController(text: widget.userProfile.position);
+    _lastEducationController = TextEditingController(text: widget.userProfile.lastEducation);
+    _addressController = TextEditingController(text: widget.userProfile.address);
+    _termStartController = TextEditingController(text: widget.userProfile.termStart.toString());
+    _termEndController = TextEditingController(text: widget.userProfile.termEnd.toString());
+  // Initialize ProfileNotifier with existing values
+    final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
     profileNotifier.updateGender(widget.userProfile.gender);
     profileNotifier.updateBloodType(widget.userProfile.bloodType);
-    profileNotifier.updateBirthPlace(widget.userProfile.birthPlace);
     profileNotifier.updateBirthDate(widget.userProfile.birthDate);
-    profileNotifier.updateNik(widget.userProfile.nik);
-    profileNotifier.updateJob(widget.userProfile.job);
-    profileNotifier.updatePosition(widget.userProfile.position);
-    profileNotifier.updateLastEducation(widget.userProfile.lastEducation);
-    profileNotifier.updateMaritalStatus(widget.userProfile.maritalStatus);
     profileNotifier.updateReligion(widget.userProfile.religion);
-    profileNotifier.updateAddress(widget.userProfile.address);
-    profileNotifier.updateNip(widget.userProfile.nip);
-    profileNotifier.updateTermStart(widget.userProfile.termStart);
-    profileNotifier.updateTermEnd(widget.userProfile.termEnd);
+    profileNotifier.updateMaritalStatus(widget.userProfile.maritalStatus);
+}
+
+  @override
+  void dispose() {
+    // Dispose controllers to free up resources
+    _nikController.dispose();
+    _nipController.dispose();
+    _nameController.dispose();
+    _birthPlaceController.dispose();
+    _birthDateController.dispose();
+    _jobController.dispose();
+    _positionController.dispose();
+    _lastEducationController.dispose();
+    _addressController.dispose();
+    _termStartController.dispose();
+    _termEndController.dispose();
+    super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -49,14 +86,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       lastDate: DateTime(2101),
     );
 
-    if (picked != null && picked != DateTime.now()) {
+    if (picked != null) {
       final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
       final formattedDate = "${picked.toLocal().year.toString().padLeft(4, '0')}-${picked.toLocal().month.toString().padLeft(2, '0')}-${picked.toLocal().day.toString().padLeft(2, '0')}";
       profileNotifier.updateBirthDate(formattedDate);
+      _birthDateController.text = formattedDate;
     }
   }
 
-  // Get token from SharedPreferences
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('auth_token');
@@ -64,48 +101,82 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return token;
   }
 
-  Future<void> _updateProfile() async {
-  final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
-  final token = await _getToken();
-  final url = 'https://laporsemanu.my.id/api/pamong/'; 
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
+  }
 
-  try {
-    final request = http.MultipartRequest('PUT', Uri.parse(url))
-      ..headers['Authorization'] = 'Bearer $token'
-      ..fields['pamong'] = jsonEncode({
-        'nama': profileNotifier.name,
-        'jenis_kelamin': profileNotifier.gender,
-        'gol_darah': profileNotifier.bloodType,
-        'tempat_lahir': profileNotifier.birthPlace,
-        'tanggal_lahir': profileNotifier.birthDate,
-        'nik': profileNotifier.nik,
-        'pekerjaan': profileNotifier.job,
-        'jabatan': profileNotifier.position,
-        'pendidikan_terakhir': profileNotifier.lastEducation,
-        'status_kawin': profileNotifier.maritalStatus,
-        'agama': profileNotifier.religion,
-        'alamat': profileNotifier.address,
-        'nip': profileNotifier.nip,
-        'masa_jabatan_mulai': profileNotifier.termStart.toString(),
-        'masa_jabatan_selesai': profileNotifier.termEnd.toString(),
+  Future<void> _updateProfile() async {
+    final profileNotifier = Provider.of<ProfileNotifier>(context, listen: false);
+    final token = await _getToken();
+    final url = 'https://laporsemanu.my.id/api/pamong/'; 
+
+    try {
+      setState(() {
+        _isLoading = true;
       });
 
-    final response = await request.send();
+      final request = http.MultipartRequest('PUT', Uri.parse(url))
+        ..headers['Authorization'] = 'Bearer $token'
+        ..fields['pamong'] = jsonEncode({
+          'nama': _nameController.text,
+          'jenis_kelamin': profileNotifier.gender,
+          'gol_darah': profileNotifier.bloodType,
+          'tempat_lahir': _birthPlaceController.text,
+          'tanggal_lahir': profileNotifier.birthDate,
+          'nik': _nikController.text,
+          'pekerjaan': _jobController.text,
+          'jabatan': _positionController.text,
+          'pendidikan_terakhir': _lastEducationController.text,
+          'status_kawin': profileNotifier.maritalStatus,
+          'agama': profileNotifier.religion,
+          'alamat': _addressController.text,
+          'nip': _nipController.text,
+          'masa_jabatan_mulai': _termStartController.text,
+          'masa_jabatan_selesai': _termEndController.text,
+        });
 
-    if (response.statusCode == 200) {
-      print('Profile updated successfully');
-      final profileModel = Provider.of<ProfileModel>(context, listen: false);
-      await profileModel.fetchUserProfile(); // Fetch updated profile data
-      Navigator.pop(context); // Go back to the profile screen
-    } else {
-      final responseBody = await response.stream.bytesToString();
-      print('Failed to update profile: $responseBody');
+      if (_profileImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'file',
+          _profileImage!.path,
+        ));
+      }
+
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        print('Profile updated successfully');
+        final profileModel = Provider.of<ProfileModel>(context, listen: false);
+        await profileModel.fetchUserProfile(); 
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ubah data berhasil!'),
+              backgroundColor: Colors.green,
+            )
+        );
+      } else {
+        final responseBody = await response.stream.bytesToString();
+        print('Failed to update profile: $responseBody');
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ubah data gagal, tolong lagi periksa data Anda'),
+              backgroundColor: Colors.red,
+            ),
+        );
+      }
+    } catch (e) {
+      print('Error: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-  } catch (e) {
-    print('Error: $e');
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -115,31 +186,46 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: Text('Edit Profile'),
       ),
-      body: Padding(
+      body: _isLoading
+      ? Center(
+        child: LoadingAnimationWidget.threeRotatingDots(
+                color: Colors.blue, size: 30
+                )
+              )
+      :Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               children: [
+                // Profile Image Display
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundImage: _profileImage != null
+                        ? FileImage(_profileImage!)
+                        : NetworkImage(widget.userProfile.image) as ImageProvider,
+                  ),
+                ),
+                const SizedBox(height: 16.0),
+                // Content Data
                 TextFormField(
-                  initialValue: profileNotifier.nik,
+                  controller: _nikController,
                   decoration: InputDecoration(labelText: 'NIK'),
                   keyboardType: TextInputType.number,
-                  onChanged: (value) => profileNotifier.updateNik(value),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: profileNotifier.nip,
+                  controller: _nipController,
                   decoration: InputDecoration(labelText: 'NIP'),
                   keyboardType: TextInputType.number,
-                  onChanged: (value) => profileNotifier.updateNip(value),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: profileNotifier.name,
+                  controller: _nameController,
                   decoration: InputDecoration(labelText: 'Nama'),
-                  onChanged: (value) => profileNotifier.updateName(value),
                 ),
                 const SizedBox(height: 16.0),
                 DropdownButtonFormField<String>(
@@ -167,36 +253,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: profileNotifier.birthPlace,
+                  controller: _birthPlaceController,
                   decoration: InputDecoration(labelText: 'Tempat Lahir'),
-                  onChanged: (value) => profileNotifier.updateBirthPlace(value),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
+                  controller: _birthDateController,
                   decoration: InputDecoration(labelText: 'Tanggal Lahir'),
                   readOnly: true,
-                  controller: TextEditingController(text: profileNotifier.birthDate),
                   onTap: () => _selectDate(context),
+                  initialValue: profileNotifier.birthDate,
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  initialValue: profileNotifier.job,
-                  decoration: InputDecoration(labelText: 'Pekerjaan'),
-                  onChanged: (value) => profileNotifier.updateJob(value),
+                DropdownButtonFormField<String>(
+                  value: profileNotifier.religion,
+                  decoration: InputDecoration(labelText: 'Agama'),
+                  items: ['Islam', 'Kristen', 'Hindu', 'Budha', 'Konghucu'].map((religion) {
+                    return DropdownMenuItem(
+                      value: religion,
+                      child: Text(religion),
+                    );
+                  }).toList(),
+                  onChanged: (value) => profileNotifier.updateReligion(value),
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  initialValue: profileNotifier.position,
-                  decoration: InputDecoration(labelText: 'Jabatan'),
-                  onChanged: (value) => profileNotifier.updatePosition(value),
-                ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  initialValue: profileNotifier.lastEducation,
-                  decoration: InputDecoration(labelText: 'Pendidikan Terakhir'),
-                  onChanged: (value) => profileNotifier.updateLastEducation(value),
-                ),
-                const SizedBox(height: 16.0),
                 DropdownButtonFormField<String>(
                   value: profileNotifier.maritalStatus,
                   decoration: InputDecoration(labelText: 'Status Kawin'),
@@ -209,40 +287,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onChanged: (value) => profileNotifier.updateMaritalStatus(value),
                 ),
                 const SizedBox(height: 16.0),
-                DropdownButtonFormField<String>(
-                  value: profileNotifier.religion,
-                  decoration: InputDecoration(labelText: 'Agama'),
-                  items: ['Islam', 'Kristen', 'Hindu', 'Budha', 'Konghucu'].map((religion) {
-                    return DropdownMenuItem(
-                      value: religion,
-                      child: Text(religion),
-                    );
-                  }).toList(),
-                  onChanged: (value) => profileNotifier.updateReligion(value),
+                TextFormField(
+                  controller: _jobController,
+                  decoration: InputDecoration(labelText: 'Pekerjaan'),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: profileNotifier.address,
+                  controller: _positionController,
+                  decoration: InputDecoration(labelText: 'Jabatan'),
+                ),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _lastEducationController,
+                  decoration: InputDecoration(labelText: 'Pendidikan Terakhir'),
+                ),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _addressController,
                   decoration: InputDecoration(labelText: 'Alamat'),
-                  onChanged: (value) => profileNotifier.updateAddress(value),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: profileNotifier.termStart.toString(),
+                  controller: _termStartController,
                   decoration: InputDecoration(labelText: 'Masa Jabatan Mulai'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => profileNotifier.updateTermStart(int.tryParse(value) ?? 0),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  initialValue: profileNotifier.termEnd.toString(),
+                  controller: _termEndController,
                   decoration: InputDecoration(labelText: 'Masa Jabatan Selesai'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => profileNotifier.updateTermEnd(int.tryParse(value) ?? 0),
                 ),
-                const SizedBox(height: 32.0),
+                const SizedBox(height: 16.0),
                 InkWell(
-                  onTap: () => _updateProfile(),
+                  onTap: () {
+                    if (_formKey.currentState!.validate()) {
+                      _updateProfile();
+                    }
+                  },
                   child: Container(
                     width: double.infinity,
                     height: 50,

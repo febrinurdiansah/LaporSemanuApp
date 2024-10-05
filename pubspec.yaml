@@ -42,7 +42,6 @@ dependencies:
   package_info_plus: ^8.0.2
   shared_preferences: ^2.3.2
   http: ^1.2.2
-  omni_datetime_picker: ^2.0.4
   intl: ^0.19.0
   loading_animation_widget: ^1.2.1
   shimmer_animation: ^2.2.1
@@ -82,6 +81,8 @@ flutter:
     - lib/assets/img/no-profil.jpg
     - lib/assets/img/logo.png
     - lib/assets/img/logo-gk.png
+    - lib/assets/img/splash-logo.png
+    - lib/assets/img/splash-dark-logo.png
   fonts:
     - family: NotoSans
       fonts:
