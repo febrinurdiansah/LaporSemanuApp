@@ -6,7 +6,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/ProfileModel.dart';
 import '../models/UserData.dart';
 import '../widgets/theme_notifier.dart';
 import 'EditProfileScreen.dart';
