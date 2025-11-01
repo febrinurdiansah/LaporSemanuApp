@@ -1,5 +1,9 @@
 # Lapor Semanu
 
+<p align="center">
+  <img src="images/thumbnail.png" width="800" />
+</p>
+
 **Lapor Semanu** is a mobile application designed to help village heads quickly and efficiently report incidents in their area. The app allows users to submit reports related to infrastructure, public services, and neighborhood security. With a simple and intuitive interface, users can attach detailed descriptions along with photos. Submitted reports are forwarded to the relevant authorities for immediate action.
 
 ## Key Features:
